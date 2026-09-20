@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>404 - GoCockpit</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+
+            display: flex;
+            flex-direction: column;
+
+            font-family: Arial, sans-serif;
+
+            background: #f8f9fa;
+            color: #1f2937;
+        }
+
+        .error-page {
+            flex: 1;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            padding: 60px 20px;
+        }
+
+        .error-content {
+            width: 100%;
+            max-width: 600px;
+
+            text-align: center;
+        }
+
+        .error-code {
+            margin: 0;
+
+            font-size: clamp(90px, 18vw, 150px);
+            line-height: 1;
+
+            font-weight: 800;
+            letter-spacing: -6px;
+
+            color: #ea580c;
+        }
+
+        .error-title {
+            margin: 20px 0 10px;
+
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .error-description {
+            margin: 0 auto 30px;
+
+            max-width: 450px;
+
+            font-size: 16px;
+            line-height: 1.6;
+
+            color: #6b7280;
+        }
+
+        .error-button {
+            display: inline-block;
+
+            padding: 12px 22px;
+
+            border-radius: 7px;
+
+            background: #ea580c;
+            color: white;
+
+            text-decoration: none;
+
+            font-size: 15px;
+            font-weight: 600;
+
+            transition:
+                background 0.2s ease,
+                transform 0.2s ease;
+        }
+
+        .error-button:hover {
+            background: #c2410c;
+            transform: translateY(-1px);
+        }
+
+        .error-path {
+            margin-top: 25px;
+
+            font-family: monospace;
+            font-size: 13px;
+
+            color: #9ca3af;
+        }
+    </style>
+</head>
+
+<body>
+
+    {{ template "navbar" . }}
+
+    <main class="error-page">
+
+        <div class="error-content">
+
+            <p class="error-code">404</p>
+
+            <h1 class="error-title">
+                Página no encontrada
+            </h1>
+
+            <p class="error-description">
+                La página que estás buscando no existe,
+                ha sido movida o la dirección no es correcta.
+            </p>
+
+            <a href="/dashboard" class="error-button">
+                Volver al dashboard
+            </a>
+
+            <p class="error-path">
+                GoCockpit · Error 404
+            </p>
+
+        </div>
+
+    </main>
+
+    {{ template "footer" . }}
+
+</body>
+</html>
+

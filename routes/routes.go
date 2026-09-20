@@ -19,6 +19,10 @@ func Register(
 
 	dashboardController := &controllers.DashboardController{}
 
+	errorController := &controllers.ErrorController{
+		Templates: templates,
+	}
+
 	mux.HandleFunc("/login", authController.Login)
 
 	mux.Handle(
@@ -27,4 +31,6 @@ func Register(
 			http.HandlerFunc(dashboardController.Index),
 		),
 	)
+
+	mux.HandleFunc("/", errorController.NotFound)
 }
