@@ -1,1 +1,12 @@
-GoCockpit utiliza una arquitectura web sencilla. El navegador se comunica con el servidor Go mediante HTTP y WebSocket. Los handlers gestionan las peticiones y los servicios contienen la lógica necesaria para obtener información o realizar operaciones sobre el sistema Linux.
+# Architecture
+
+GoCockpit utiliza una arquitectura web sencilla basada en Go.
+
+* **Frontend:** HTML, CSS y JavaScript.
+* **Backend:** Go con `net/http`.
+* **Handlers:** gestionan las peticiones.
+* **Services:** contienen la lógica.
+* **Linux:** proporciona la información y operaciones del sistema.
+* **WebSocket:** utilizado para funcionalidades en tiempo real.
+
+La aplicación se desarrollará de forma modular, añadiendo funcionalidades progresivamente.
