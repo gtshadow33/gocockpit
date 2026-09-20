@@ -1,0 +1,1 @@
+GoCockpit utiliza una arquitectura web sencilla. El navegador se comunica con el servidor Go mediante HTTP y WebSocket. Los handlers gestionan las peticiones y los servicios contienen la lógica necesaria para obtener información o realizar operaciones sobre el sistema Linux.
