@@ -9,8 +9,8 @@ import (
 )
 
 type Stats struct {
-	CPU int
-	RAM int
+	CPU int `json:"cpu"`
+	RAM int `json:"ram"`
 }
 
 type cpuStats struct {

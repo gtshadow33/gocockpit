@@ -32,7 +32,7 @@ func Register(
 			http.HandlerFunc(dashboardController.Index),
 		),
 	)
-	mux.HandleFunc("/ws/stats", websocket.Stats)
+	mux.Handle("/ws/stats", middleware.Auth(http.HandlerFunc(websocket.Stats)))
 
 	mux.HandleFunc("/", errorController.NotFound)
 }
