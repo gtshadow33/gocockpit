@@ -24,7 +24,7 @@ func Stats(w http.ResponseWriter, r *http.Request) {
 
 	defer conn.Close()
 
-	ticker := time.NewTicker(4 * time.Second)
+	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
 	for {

@@ -16,7 +16,7 @@ func Start() {
 
 	go func() {
 
-		ticker := time.NewTicker(1 * time.Second)
+		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
 
 		for {
