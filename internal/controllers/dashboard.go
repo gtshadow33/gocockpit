@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"gocockpit/internal/middleware"
-	"gocockpit/internal/system"
+	"gocockpit/internal/monitor"
 )
 
 type DashboardController struct{}
@@ -14,7 +14,7 @@ func (d *DashboardController) Index(w http.ResponseWriter, r *http.Request) {
 
 	username := r.Context().Value(middleware.UsernameKey).(string)
 
-	stats := system.GetStats()
+	stats := monitor.GetStats()
 
 	data := struct {
 		Username string
@@ -28,13 +28,20 @@ func (d *DashboardController) Index(w http.ResponseWriter, r *http.Request) {
 
 	tmpl, err := template.ParseFiles("web/templates/dashboard.html")
 	if err != nil {
-		http.Error(w, "Error al cargar la plantilla", http.StatusInternalServerError)
+		http.Error(
+			w,
+			"Error al cargar la plantilla",
+			http.StatusInternalServerError,
+		)
 		return
 	}
 
 	err = tmpl.Execute(w, data)
 	if err != nil {
-		http.Error(w, "Error al renderizar el dashboard", http.StatusInternalServerError)
-		return
+		http.Error(
+			w,
+			"Error al renderizar el dashboard",
+			http.StatusInternalServerError,
+		)
 	}
 }

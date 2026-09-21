@@ -6,6 +6,7 @@ import (
 
 	"gocockpit/internal/controllers"
 	"gocockpit/internal/middleware"
+	"gocockpit/internal/websocket"
 )
 
 func Register(
@@ -31,6 +32,7 @@ func Register(
 			http.HandlerFunc(dashboardController.Index),
 		),
 	)
+	mux.HandleFunc("/ws/stats", websocket.Stats)
 
 	mux.HandleFunc("/", errorController.NotFound)
 }
