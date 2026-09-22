@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"gocockpit/internal/monitor"
+	"gocockpit/internal/system"
 	"gocockpit/routes"
 )
 
@@ -18,7 +19,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	routes.Register(mux, templates)
-
+	system.Start()
 	monitor.Start()
 
 	log.Println("GoCockpit escuchando en http://localhost:8080")

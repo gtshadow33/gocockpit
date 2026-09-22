@@ -6,6 +6,7 @@ import (
 
 	"gocockpit/internal/middleware"
 	"gocockpit/internal/monitor"
+	"gocockpit/internal/system"
 )
 
 type DashboardController struct{}
@@ -16,17 +17,24 @@ func (d *DashboardController) Index(w http.ResponseWriter, r *http.Request) {
 
 	stats := monitor.GetStats()
 
+	info := system.GetInfo()
+
 	data := struct {
 		Username string
 		CPU      int
 		RAM      int
+		Info     system.SystemInfo
 	}{
 		Username: username,
 		CPU:      stats.CPU,
 		RAM:      stats.RAM,
+		Info:     info,
 	}
 
-	tmpl, err := template.ParseFiles("web/templates/dashboard.html")
+	tmpl, err := template.ParseFiles(
+		"web/templates/dashboard.html",
+	)
+
 	if err != nil {
 		http.Error(
 			w,
@@ -37,6 +45,7 @@ func (d *DashboardController) Index(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = tmpl.Execute(w, data)
+
 	if err != nil {
 		http.Error(
 			w,
