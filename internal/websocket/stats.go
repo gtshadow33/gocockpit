@@ -21,8 +21,10 @@ func Stats(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-
 	defer conn.Close()
+
+	monitor.Connect()
+	defer monitor.Disconnect()
 
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
