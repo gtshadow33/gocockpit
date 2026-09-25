@@ -2,7 +2,6 @@ package websocket
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/gorilla/websocket"
 
@@ -23,21 +22,21 @@ func Stats(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	monitor.Connect()
-	defer monitor.Disconnect()
+	updates := monitor.Connect()
+	defer monitor.Disconnect(updates)
 
-	ticker := time.NewTicker(10 * time.Second)
-	defer ticker.Stop()
+	// Enviar el estado actual inmediatamente.
+	stats := monitor.GetStats()
 
-	for {
+	if err := conn.WriteJSON(stats); err != nil {
+		return
+	}
 
-		stats := monitor.GetStats()
+	// Esperar actualizaciones del monitor.
+	for stats := range updates {
 
-		err := conn.WriteJSON(stats)
-		if err != nil {
+		if err := conn.WriteJSON(stats); err != nil {
 			return
 		}
-
-		<-ticker.C
 	}
 }

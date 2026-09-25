@@ -12,51 +12,64 @@ var (
 	stats   system.Stats
 
 	ctrlMu  sync.Mutex
-	clients int
+	clients map[chan system.Stats]struct{}
 	stop    chan struct{}
 )
 
-// Connect debe llamarse cuando un cliente WS se conecta.
-// Arranca el polling solo si es el primer cliente.
-func Connect() {
+func init() {
+	clients = make(map[chan system.Stats]struct{})
+}
+
+// Connect registra un nuevo WebSocket.
+func Connect() chan system.Stats {
+
+	ch := make(chan system.Stats, 1)
+
 	ctrlMu.Lock()
 	defer ctrlMu.Unlock()
 
-	clients++
+	clients[ch] = struct{}{}
 
-	if clients == 1 {
+	if len(clients) == 1 {
 		stop = make(chan struct{})
 		go run(stop)
 	}
+
+	return ch
 }
 
-// Disconnect debe llamarse cuando un cliente WS se desconecta.
-// Para el polling si era el último cliente.
-func Disconnect() {
+// Disconnect elimina un WebSocket.
+func Disconnect(ch chan system.Stats) {
+
 	ctrlMu.Lock()
 	defer ctrlMu.Unlock()
 
-	if clients == 0 {
+	if _, ok := clients[ch]; !ok {
 		return
 	}
 
-	clients--
+	delete(clients, ch)
+	close(ch)
 
-	if clients == 0 {
+	if len(clients) == 0 {
 		close(stop)
 	}
 }
 
 func run(stop chan struct{}) {
+
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
+	// Primera medición inmediatamente.
 	update()
 
 	for {
 		select {
+
 		case <-stop:
 			return
+
 		case <-ticker.C:
 			update()
 		}
@@ -64,15 +77,35 @@ func run(stop chan struct{}) {
 }
 
 func update() {
+
 	newStats := system.GetStats()
 
 	statsMu.Lock()
 	stats = newStats
 	statsMu.Unlock()
+
+	broadcast(newStats)
 }
 
-// GetStats devuelve el último valor cacheado (no calcula nada).
+func broadcast(stats system.Stats) {
+
+	ctrlMu.Lock()
+	defer ctrlMu.Unlock()
+
+	for ch := range clients {
+
+		select {
+		case ch <- stats:
+		default:
+			// El cliente todavía no ha consumido
+			// la actualización anterior.
+		}
+	}
+}
+
+// GetStats devuelve las últimas estadísticas.
 func GetStats() system.Stats {
+
 	statsMu.RLock()
 	defer statsMu.RUnlock()
 
