@@ -13,12 +13,13 @@ func Register(
 	mux *http.ServeMux,
 	templates *template.Template,
 ) {
-
 	authController := &controllers.AuthController{
 		Templates: templates,
 	}
 
-	dashboardController := &controllers.DashboardController{}
+	dashboardController := &controllers.DashboardController{
+		Templates: templates,
+	}
 
 	errorController := &controllers.ErrorController{
 		Templates: templates,
@@ -32,7 +33,13 @@ func Register(
 			http.HandlerFunc(dashboardController.Index),
 		),
 	)
-	mux.Handle("/ws/stats", middleware.Auth(http.HandlerFunc(websocket.Stats)))
+
+	mux.Handle(
+		"/ws/stats",
+		middleware.Auth(
+			http.HandlerFunc(websocket.Stats),
+		),
+	)
 
 	mux.HandleFunc("/", errorController.NotFound)
 }

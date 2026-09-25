@@ -9,14 +9,15 @@ import (
 	"gocockpit/internal/system"
 )
 
-type DashboardController struct{}
+type DashboardController struct {
+	Templates *template.Template
+}
 
 func (d *DashboardController) Index(w http.ResponseWriter, r *http.Request) {
 
 	username := r.Context().Value(middleware.UsernameKey).(string)
 
 	stats := monitor.GetStats()
-
 	info := system.GetInfo()
 
 	data := struct {
@@ -31,21 +32,7 @@ func (d *DashboardController) Index(w http.ResponseWriter, r *http.Request) {
 		Info:     info,
 	}
 
-	tmpl, err := template.ParseFiles(
-		"web/templates/dashboard.html",
-	)
-
-	if err != nil {
-		http.Error(
-			w,
-			"Error al cargar la plantilla",
-			http.StatusInternalServerError,
-		)
-		return
-	}
-
-	err = tmpl.Execute(w, data)
-
+	err := d.Templates.ExecuteTemplate(w, "dashboard.html", data)
 	if err != nil {
 		http.Error(
 			w,
