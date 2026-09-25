@@ -18,6 +18,7 @@ var (
 )
 
 func Create(username string) (string, error) {
+
 	bytes := make([]byte, 32)
 
 	_, err := rand.Read(bytes)
@@ -40,6 +41,7 @@ func Create(username string) (string, error) {
 }
 
 func Get(sessionID string) (string, bool) {
+
 	mu.RLock()
 	session, exists := sessions[sessionID]
 	mu.RUnlock()
@@ -49,6 +51,7 @@ func Get(sessionID string) (string, bool) {
 	}
 
 	if time.Now().After(session.ExpiresAt) {
+
 		mu.Lock()
 		delete(sessions, sessionID)
 		mu.Unlock()
@@ -57,4 +60,12 @@ func Get(sessionID string) (string, bool) {
 	}
 
 	return session.Username, true
+}
+
+func Delete(sessionID string) {
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	delete(sessions, sessionID)
 }

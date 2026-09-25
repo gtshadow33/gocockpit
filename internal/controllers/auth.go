@@ -59,3 +59,23 @@ func (a *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 }
+
+func (a *AuthController) Logout(w http.ResponseWriter, r *http.Request) {
+
+	cookie, err := r.Cookie("session_id")
+
+	if err == nil {
+		session.Delete(cookie.Value)
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_id",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+		MaxAge:   -1,
+	})
+
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
+}
