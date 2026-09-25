@@ -1,0 +1,173 @@
+/* =========================
+   DASHBOARD
+   ========================= */
+
+main {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 0 24px;
+}
+
+/* WELCOME */
+
+.welcome {
+    margin-bottom: 28px;
+}
+
+.welcome h2 {
+    margin: 0 0 6px;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text);
+}
+
+.welcome p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+/* STATS */
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+/* CARD */
+
+.card {
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+
+    padding: 22px 24px;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.card h3 {
+    margin: 0;
+
+    font-size: 12.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+
+    color: var(--text-subtle);
+}
+
+.card-header span {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.value {
+    margin: 16px 0;
+
+    font-size: 38px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+
+    color: var(--text);
+    font-family: var(--font-mono);
+}
+
+/* BARRA DE PROGRESO */
+
+.bar {
+    width: 100%;
+    height: 6px;
+
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    width: 0%;
+
+    background: var(--accent);
+
+    border-radius: 999px;
+
+    transition: width 0.3s ease;
+}
+
+/* INFO */
+
+.info {
+    grid-column: 1 / -1;
+}
+
+.info-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+
+    margin-top: 18px;
+}
+
+.info-item {
+    padding: 14px 16px;
+
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}
+
+.info-label {
+    display: block;
+
+    margin-bottom: 4px;
+
+    color: var(--text-subtle);
+
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.info-value {
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+
+    color: var(--text);
+    word-break: break-word;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 700px) {
+    main {
+        margin-top: 24px;
+        padding: 0 20px;
+    }
+
+    .stats {
+        grid-template-columns: 1fr;
+    }
+
+    .info-list {
+        grid-template-columns: 1fr;
+    }
+
+    .value {
+        font-size: 32px;
+    }
+}

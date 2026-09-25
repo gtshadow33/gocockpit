@@ -13,6 +13,7 @@ func Register(
 	mux *http.ServeMux,
 	templates *template.Template,
 ) {
+
 	authController := &controllers.AuthController{
 		Templates: templates,
 	}
@@ -21,19 +22,27 @@ func Register(
 		Templates: templates,
 	}
 
+	servicesController := &controllers.ServicesController{
+		Templates: templates,
+	}
+
 	errorController := &controllers.ErrorController{
 		Templates: templates,
 	}
 
-	// 1. Archivos estáticos: usaba http.Handle en lugar de mux.Handle
+	// Archivos estáticos
 	fs := http.FileServer(http.Dir("./web/static"))
-	mux.Handle("/static/", http.StripPrefix("/static/", fs))
 
-	// 2. Rutas de autenticación
+	mux.Handle(
+		"/static/",
+		http.StripPrefix("/static/", fs),
+	)
+
+	// Autenticación
 	mux.HandleFunc("/login", authController.Login)
 	mux.HandleFunc("/logout", authController.Logout)
 
-	// 3. Rutas protegidas
+	// Dashboard
 	mux.Handle(
 		"/dashboard",
 		middleware.Auth(
@@ -41,6 +50,15 @@ func Register(
 		),
 	)
 
+	// Servicios
+	mux.Handle(
+		"/services",
+		middleware.Auth(
+			http.HandlerFunc(servicesController.Index),
+		),
+	)
+
+	// WebSocket
 	mux.Handle(
 		"/ws/stats",
 		middleware.Auth(
@@ -48,6 +66,7 @@ func Register(
 		),
 	)
 
-	// 4. Ruta por defecto para 404
+	// 404
 	mux.HandleFunc("/", errorController.NotFound)
 }
+

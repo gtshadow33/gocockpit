@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Servicios - GoCockpit</title>
+
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/services.css">
+
+</head>
+
+<body>
+
+    <header>
+
+        <h1>GoCockpit</h1>
+
+        <div class="user">
+            {{ .Username }}
+        </div>
+
+    </header>
+
+    <main class="container">
+
+        <section class="welcome">
+
+            <h2>Servicios</h2>
+
+            <p>Estado de los servicios del sistema</p>
+
+        </section>
+
+        <section class="services">
+
+            {{ range .Services }}
+
+            <article class="service {{ .Status }}">
+
+                <div class="service-name">
+
+                    <span class="service-indicator"></span>
+
+                    <span class="service-label">
+                        {{ .Name }}
+                    </span>
+
+                </div>
+
+                <span class="service-status {{ .Status }}">
+                    {{ .Status }}
+                </span>
+
+            </article>
+
+            {{ else }}
+
+            <p class="empty">
+                No se encontraron servicios.
+            </p>
+
+            {{ end }}
+
+        </section>
+
+    </main>
+
+</body>
+
+</html>

@@ -2,33 +2,125 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GoCockpit - Login</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--header-bg);
+            padding: 20px;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 360px;
+
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            padding: 36px 32px;
+        }
+
+        .login-brand {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .login-brand h1 {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            color: var(--text);
+        }
+
+        .login-brand p {
+            margin-top: 4px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        label {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        input {
+            font: inherit;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--surface-alt);
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+
+        button {
+            margin-top: 8px;
+            padding: 11px;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: var(--accent);
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        button:hover {
+            background: var(--accent-hover);
+        }
+    </style>
 </head>
 <body>
 
-<h1>GoCockpit</h1>
+<div class="login-card">
 
-<form method="POST" action="/login">
+    <div class="login-brand">
+        <h1>GoCockpit</h1>
+        <p>Panel de administración del sistema</p>
+    </div>
 
-    <label>
-        Usuario
-        <input type="text" name="username" required>
-    </label>
+    <form method="POST" action="/login">
 
-    <br>
+        <label>
+            Usuario
+            <input type="text" name="username" required autocomplete="username">
+        </label>
 
-    <label>
-        Contraseña
-        <input type="password" name="password" required>
-    </label>
+        <label>
+            Contraseña
+            <input type="password" name="password" required autocomplete="current-password">
+        </label>
 
-    <br>
+        <button type="submit">
+            Iniciar sesión
+        </button>
 
-    <button type="submit">
-        Iniciar sesión
-    </button>
+    </form>
 
-</form>
+</div>
 
 </body>
 </html>
