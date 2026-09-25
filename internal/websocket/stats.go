@@ -25,12 +25,6 @@ func Stats(w http.ResponseWriter, r *http.Request) {
 	updates := monitor.Connect()
 	defer monitor.Disconnect(updates)
 
-	// Enviar el estado actual inmediatamente.
-	stats := monitor.GetStats()
-
-	if err := conn.WriteJSON(stats); err != nil {
-		return
-	}
 
 	// Esperar actualizaciones del monitor.
 	for stats := range updates {
