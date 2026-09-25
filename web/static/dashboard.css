@@ -1,0 +1,142 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    background: #f4f4f5;
+    color: #18181b;
+}
+
+header {
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    background: #18181b;
+    color: white;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 22px;
+}
+
+.user {
+    color: #d4d4d8;
+    font-size: 14px;
+}
+
+main {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 0 24px;
+}
+
+.welcome {
+    margin-bottom: 30px;
+}
+
+.welcome h2 {
+    margin: 0 0 8px;
+    font-size: 30px;
+}
+
+.welcome p {
+    margin: 0;
+    color: #71717a;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.card {
+    background: white;
+    border: 1px solid #e4e4e7;
+    border-radius: 14px;
+    padding: 24px;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #52525b;
+}
+
+.value {
+    margin: 20px 0;
+    font-size: 42px;
+    font-weight: 700;
+}
+
+.bar {
+    width: 100%;
+    height: 10px;
+    background: #e4e4e7;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    width: 0%;
+    background: #18181b;
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.info {
+    grid-column: 1 / -1;
+}
+
+.info-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.info-item {
+    padding: 14px;
+    background: #f4f4f5;
+    border-radius: 8px;
+}
+
+.info-label {
+    display: block;
+    margin-bottom: 4px;
+    color: #71717a;
+    font-size: 13px;
+}
+
+.info-value {
+    font-size: 15px;
+    font-weight: 600;
+    word-break: break-word;
+}
+
+@media (max-width: 700px) {
+    .stats {
+        grid-template-columns: 1fr;
+    }
+    .info-list {
+        grid-template-columns: 1fr;
+    }
+    header {
+        padding: 0 20px;
+    }
+    main {
+        margin-top: 25px;
+    }
+}

@@ -25,8 +25,15 @@ func Register(
 		Templates: templates,
 	}
 
-	mux.HandleFunc("/login", authController.Login)
+	// 1. Archivos estáticos: usaba http.Handle en lugar de mux.Handle
+	fs := http.FileServer(http.Dir("./web/static"))
+	mux.Handle("/static/", http.StripPrefix("/static/", fs))
 
+	// 2. Rutas de autenticación
+	mux.HandleFunc("/login", authController.Login)
+	mux.HandleFunc("/logout", authController.Logout)
+
+	// 3. Rutas protegidas
 	mux.Handle(
 		"/dashboard",
 		middleware.Auth(
@@ -41,5 +48,6 @@ func Register(
 		),
 	)
 
+	// 4. Ruta por defecto para 404
 	mux.HandleFunc("/", errorController.NotFound)
 }
