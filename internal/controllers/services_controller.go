@@ -12,7 +12,7 @@ type ServicesController struct {
 	Templates *template.Template
 }
 
-func (s *ServicesController) Index(w http.ResponseWriter, r *http.Request) {
+func (c *ServicesController) Index(w http.ResponseWriter, r *http.Request) {
 
 	username := r.Context().Value(middleware.UsernameKey).(string)
 
@@ -21,7 +21,7 @@ func (s *ServicesController) Index(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(
 			w,
-			"Error al obtener los servicios",
+			err.Error(),
 			http.StatusInternalServerError,
 		)
 		return
@@ -35,7 +35,7 @@ func (s *ServicesController) Index(w http.ResponseWriter, r *http.Request) {
 		Services: services,
 	}
 
-	err = s.Templates.ExecuteTemplate(
+	err = c.Templates.ExecuteTemplate(
 		w,
 		"services.html",
 		data,
@@ -44,20 +44,30 @@ func (s *ServicesController) Index(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(
 			w,
-			"Error al renderizar los servicios",
+			err.Error(),
 			http.StatusInternalServerError,
 		)
+		return
 	}
 }
 
 func (c *ServicesController) Start(w http.ResponseWriter, r *http.Request) {
 
-	name := r.FormValue("name")
+	service := r.FormValue("service")
 
-	if err := system.StartService(name); err != nil {
+	if service == "" {
 		http.Error(
 			w,
-			"Error iniciando servicio",
+			"Nombre del servicio vacío",
+			http.StatusBadRequest,
+		)
+		return
+	}
+
+	if err := system.StartService(service); err != nil {
+		http.Error(
+			w,
+			err.Error(),
 			http.StatusInternalServerError,
 		)
 		return
@@ -73,12 +83,21 @@ func (c *ServicesController) Start(w http.ResponseWriter, r *http.Request) {
 
 func (c *ServicesController) Stop(w http.ResponseWriter, r *http.Request) {
 
-	name := r.FormValue("name")
+	service := r.FormValue("service")
 
-	if err := system.StopService(name); err != nil {
+	if service == "" {
 		http.Error(
 			w,
-			"Error deteniendo servicio",
+			"Nombre del servicio vacío",
+			http.StatusBadRequest,
+		)
+		return
+	}
+
+	if err := system.StopService(service); err != nil {
+		http.Error(
+			w,
+			err.Error(),
 			http.StatusInternalServerError,
 		)
 		return
