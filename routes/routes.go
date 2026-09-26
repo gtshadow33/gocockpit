@@ -31,6 +31,7 @@ func Register(
 	}
 
 	// Archivos estáticos
+
 	fs := http.FileServer(http.Dir("./web/static"))
 
 	mux.Handle(
@@ -39,10 +40,12 @@ func Register(
 	)
 
 	// Autenticación
+
 	mux.HandleFunc("/login", authController.Login)
 	mux.HandleFunc("/logout", authController.Logout)
 
 	// Dashboard
+
 	mux.Handle(
 		"/dashboard",
 		middleware.Auth(
@@ -51,6 +54,7 @@ func Register(
 	)
 
 	// Servicios
+
 	mux.Handle(
 		"/services",
 		middleware.Auth(
@@ -58,32 +62,41 @@ func Register(
 		),
 	)
 
+	// Iniciar servicio -> requiere sudo
+
+	mux.Handle(
+		"/services/start",
+		middleware.Auth(
+			middleware.Admin(
+				http.HandlerFunc(servicesController.Start),
+			),
+		),
+	)
+
+	// Detener servicio -> requiere sudo
+
+	mux.Handle(
+		"/services/stop",
+		middleware.Auth(
+			middleware.Admin(
+				http.HandlerFunc(servicesController.Stop),
+			),
+		),
+	)
+
 	// WebSocket
+
 	mux.Handle(
 		"/ws/stats",
 		middleware.Auth(
 			http.HandlerFunc(websocket.Stats),
 		),
 	)
-	mux.Handle(
-	"/services/start",
-	middleware.Auth(
-		http.HandlerFunc(
-			servicesController.Start,
-		),
-	),
-)
-
-mux.Handle(
-	"/services/stop",
-	middleware.Auth(
-		http.HandlerFunc(
-			servicesController.Stop,
-		),
-	),
-)
 
 	// 404
-	mux.HandleFunc("/", errorController.NotFound)
-}
 
+	mux.HandleFunc(
+		"/",
+		errorController.NotFound,
+	)
+}

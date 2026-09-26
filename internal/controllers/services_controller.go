@@ -50,38 +50,44 @@ func (s *ServicesController) Index(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *ServicesController) Start(w http.ResponseWriter, r *http.Request) {
+func (c *ServicesController) Start(w http.ResponseWriter, r *http.Request) {
 
-	service := r.FormValue("service")
+	name := r.FormValue("name")
 
-	err := system.StartService(service)
-
-	if err != nil {
+	if err := system.StartService(name); err != nil {
 		http.Error(
 			w,
-			"Error al iniciar el servicio",
+			"Error iniciando servicio",
 			http.StatusInternalServerError,
 		)
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	http.Redirect(
+		w,
+		r,
+		"/services",
+		http.StatusSeeOther,
+	)
 }
 
-func (s *ServicesController) Stop(w http.ResponseWriter, r *http.Request) {
+func (c *ServicesController) Stop(w http.ResponseWriter, r *http.Request) {
 
-	service := r.FormValue("service")
+	name := r.FormValue("name")
 
-	err := system.StopService(service)
-
-	if err != nil {
+	if err := system.StopService(name); err != nil {
 		http.Error(
 			w,
-			"Error al detener el servicio",
+			"Error deteniendo servicio",
 			http.StatusInternalServerError,
 		)
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	http.Redirect(
+		w,
+		r,
+		"/services",
+		http.StatusSeeOther,
+	)
 }

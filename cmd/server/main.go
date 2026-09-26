@@ -6,13 +6,21 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 
+	"gocockpit/internal/config"
 	"gocockpit/internal/system"
 	"gocockpit/routes"
 )
 
 func main() {
 
+	// Cargar configuración
+	if err := config.Load("gocockpit.toml"); err != nil {
+		log.Fatal("Error cargando configuración: ", err)
+	}
+
+	// Buscar templates
 	var files []string
 
 	err := filepath.Walk("web/templates", func(path string, info os.FileInfo, err error) error {
@@ -28,21 +36,33 @@ func main() {
 	})
 
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Error buscando templates: ", err)
 	}
 
+	// Cargar templates
 	templates := template.Must(
 		template.ParseFiles(files...),
 	)
 
+	// Router
 	mux := http.NewServeMux()
 
-	routes.Register(mux, templates)
+	routes.Register(
+		mux,
+		templates,
+	)
+
+	// Monitor del sistema
 	system.Start()
 
-	log.Println("GoCockpit escuchando en http://localhost:8080")
+	// Servidor
+	address := config.App.Host + ":" + strconv.Itoa(config.App.Port)
+
+	log.Println(
+		"GoCockpit escuchando en http://" + address,
+	)
 
 	log.Fatal(
-		http.ListenAndServe(":8080", mux),
+		http.ListenAndServe(address, mux),
 	)
 }
