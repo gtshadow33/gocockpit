@@ -1,39 +1,44 @@
+
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
 
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>Servicios - GoCockpit</title>
 
-    <link rel="stylesheet" href="/static/css/style.css">
-    <link rel="stylesheet" href="/static/css/services.css">
+    <link
+        rel="stylesheet"
+        href="/static/css/app.css"
+    >
 
 </head>
 
 <body>
 
-    <header>
+    {{ template "navbar" . }}
 
-        <h1>GoCockpit</h1>
 
-        <div class="user">
-            {{ .Username }}
-        </div>
-
-    </header>
-
-    <main class="container">
+    <main class="main">
 
         <section class="welcome">
 
-            <h2>Servicios</h2>
+            <h2>
+                Servicios
+            </h2>
 
-            <p>Estado de los servicios del sistema</p>
+            <p>
+                Estado de los servicios del sistema
+            </p>
 
         </section>
+
 
         <section class="services">
 
@@ -51,11 +56,74 @@
 
                 </div>
 
-                <span class="service-status {{ .Status }}">
-                    {{ .Status }}
-                </span>
+
+                <div class="service-actions">
+
+                    <span class="service-status {{ .Status }}">
+                        {{ .Status }}
+                    </span>
+
+
+                    {{ if eq .Status "active" }}
+
+                    <form
+                        method="POST"
+                        action="/services/stop"
+                    >
+
+                        <input
+                            type="hidden"
+                            name="service"
+                            value="{{ .Name }}"
+                        >
+
+                        <label class="toggle">
+
+                            <input
+                                type="checkbox"
+                                checked
+                                onchange="this.form.submit()"
+                            >
+
+                            <span class="toggle-slider"></span>
+
+                        </label>
+
+                    </form>
+
+
+                    {{ else }}
+
+                    <form
+                        method="POST"
+                        action="/services/start"
+                    >
+
+                        <input
+                            type="hidden"
+                            name="service"
+                            value="{{ .Name }}"
+                        >
+
+                        <label class="toggle">
+
+                            <input
+                                type="checkbox"
+                                onchange="this.form.submit()"
+                            >
+
+                            <span class="toggle-slider"></span>
+
+                        </label>
+
+                    </form>
+
+                    {{ end }}
+
+                </div>
 
             </article>
+
 
             {{ else }}
 
@@ -69,6 +137,10 @@
 
     </main>
 
+
+    {{ template "footer" . }}
+
 </body>
 
 </html>
+

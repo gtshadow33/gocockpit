@@ -1,40 +1,36 @@
-<!DOCTYPE html>
 
+<!DOCTYPE html>
 <html lang="es">
 
 <head>
 
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="/static/css/dashboard.css">
-    <link rel="stylesheet" href="/static/css/style.css">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <title>GoCockpit - Dashboard</title>
+    <title>Dashboard - GoCockpit</title>
 
-
+    <link
+        rel="stylesheet"
+        href="/static/css/app.css"
+    >
 
 </head>
 
 <body>
 
-    <header>
+    {{ template "navbar" . }}
 
-        <h1>GoCockpit</h1>
-
-        <div class="user">
-            {{ .Username }}
-        </div>
-
-    </header>
-
-
-    <main>
-        {{ template "navbar" . }}
+    <main class="main">
 
         <section class="welcome">
 
-            <h2>Dashboard</h2>
+            <h2>
+                Dashboard
+            </h2>
 
             <p>
                 Estado actual del sistema
@@ -45,14 +41,15 @@
 
         <section class="stats">
 
-
             <!-- CPU -->
 
             <article class="card">
 
                 <div class="card-header">
 
-                    <h3>CPU</h3>
+                    <h3>
+                        CPU
+                    </h3>
 
                     <span id="cpu-header">
                         {{ .CPU }}%
@@ -60,13 +57,20 @@
 
                 </div>
 
-                <div class="value" id="cpu-value">
+                <div
+                    class="value"
+                    id="cpu-value"
+                >
                     {{ .CPU }}%
                 </div>
 
                 <div class="bar">
 
-                    <div id="cpu-bar" class="bar-fill"></div>
+                    <div
+                        id="cpu-bar"
+                        class="bar-fill"
+                        style="width: {{ .CPU }}%"
+                    ></div>
 
                 </div>
 
@@ -79,7 +83,9 @@
 
                 <div class="card-header">
 
-                    <h3>RAM</h3>
+                    <h3>
+                        RAM
+                    </h3>
 
                     <span id="ram-header">
                         {{ .RAM }}%
@@ -87,13 +93,20 @@
 
                 </div>
 
-                <div class="value" id="ram-value">
+                <div
+                    class="value"
+                    id="ram-value"
+                >
                     {{ .RAM }}%
                 </div>
 
                 <div class="bar">
 
-                    <div id="ram-bar" class="bar-fill"></div>
+                    <div
+                        id="ram-bar"
+                        class="bar-fill"
+                        style="width: {{ .RAM }}%"
+                    ></div>
 
                 </div>
 
@@ -106,13 +119,13 @@
 
                 <div class="card-header">
 
-                    <h3>Información del servidor</h3>
+                    <h3>
+                        Información del servidor
+                    </h3>
 
                 </div>
 
-
                 <div class="info-list">
-
 
                     <div class="info-item">
 
@@ -191,7 +204,6 @@
 
                     </div>
 
-
                 </div>
 
             </article>
@@ -201,55 +213,24 @@
     </main>
 
 
-    <script>
-        console.log("Iniciando WebSocket...");
+    {{ template "footer" . }}
 
+
+    <script>
 
         const protocol =
-            window.location.protocol === "https:" ?
-            "wss:" :
-            "ws:";
-
+            window.location.protocol === "https:"
+                ? "wss:"
+                : "ws:";
 
         const socket = new WebSocket(
             `${protocol}//${window.location.host}/ws/stats`
         );
 
 
-        socket.onopen = function() {
-
-            console.log("WebSocket conectado");
-
-        };
-
-
         socket.onmessage = function(event) {
 
-            console.log(
-                "Mensaje recibido:",
-                event.data
-            );
-
-
             const stats = JSON.parse(event.data);
-
-
-            console.log(
-                "Objeto recibido:",
-                stats
-            );
-
-
-            console.log(
-                "CPU:",
-                stats.cpu
-            );
-
-
-            console.log(
-                "RAM:",
-                stats.ram
-            );
 
 
             // CPU
@@ -258,11 +239,9 @@
                 "cpu-header"
             ).textContent = `${stats.cpu}%`;
 
-
             document.getElementById(
                 "cpu-value"
             ).textContent = `${stats.cpu}%`;
-
 
             document.getElementById(
                 "cpu-bar"
@@ -275,11 +254,9 @@
                 "ram-header"
             ).textContent = `${stats.ram}%`;
 
-
             document.getElementById(
                 "ram-value"
             ).textContent = `${stats.ram}%`;
-
 
             document.getElementById(
                 "ram-bar"
@@ -287,24 +264,6 @@
 
         };
 
-
-        socket.onerror = function(error) {
-
-            console.error(
-                "Error del WebSocket:",
-                error
-            );
-
-        };
-
-
-        socket.onclose = function() {
-
-            console.log(
-                "WebSocket desconectado"
-            );
-
-        };
     </script>
 
 </body>

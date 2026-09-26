@@ -62,3 +62,29 @@ func GetServices() ([]Service, error) {
 	return services, nil
 }
 
+
+
+
+
+func StartService(name string) error {
+
+	cmd := exec.Command(
+		"systemctl",
+		"start",
+		name,
+	)
+
+	return cmd.Run()
+}
+
+func StopService(name string) error {
+
+	cmd := exec.Command(
+		"systemctl",
+		"stop",
+		name,
+	)
+
+	return cmd.Run()
+}
+

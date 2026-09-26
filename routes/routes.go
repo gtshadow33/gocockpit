@@ -65,6 +65,23 @@ func Register(
 			http.HandlerFunc(websocket.Stats),
 		),
 	)
+	mux.Handle(
+	"/services/start",
+	middleware.Auth(
+		http.HandlerFunc(
+			servicesController.Start,
+		),
+	),
+)
+
+mux.Handle(
+	"/services/stop",
+	middleware.Auth(
+		http.HandlerFunc(
+			servicesController.Stop,
+		),
+	),
+)
 
 	// 404
 	mux.HandleFunc("/", errorController.NotFound)

@@ -49,3 +49,39 @@ func (s *ServicesController) Index(w http.ResponseWriter, r *http.Request) {
 		)
 	}
 }
+
+func (s *ServicesController) Start(w http.ResponseWriter, r *http.Request) {
+
+	service := r.FormValue("service")
+
+	err := system.StartService(service)
+
+	if err != nil {
+		http.Error(
+			w,
+			"Error al iniciar el servicio",
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *ServicesController) Stop(w http.ResponseWriter, r *http.Request) {
+
+	service := r.FormValue("service")
+
+	err := system.StopService(service)
+
+	if err != nil {
+		http.Error(
+			w,
+			"Error al detener el servicio",
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
