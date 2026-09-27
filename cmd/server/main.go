@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"gocockpit/internal/config"
+	"gocockpit/internal/session"
 	"gocockpit/internal/system"
 	"gocockpit/routes"
 )
@@ -54,6 +55,9 @@ func main() {
 
 	// Monitor del sistema
 	system.Start()
+
+	// Limpieza automática de sesiones
+	session.StartCleanup()
 
 	// Servidor
 	address := config.App.Host + ":" + strconv.Itoa(config.App.Port)
