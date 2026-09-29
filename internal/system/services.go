@@ -1,10 +1,10 @@
 package system
 
 import (
-	"os/exec"
 	"strings"
 	"sync"
-	"time"
+
+	"github.com/godbus/dbus/v5"
 )
 
 type Service struct {
@@ -12,137 +12,135 @@ type Service struct {
 	Status string
 }
 
-var (
-	servicesCache []Service
-	cacheTime     time.Time
+type ServiceManager struct {
+	systemd *Systemd
 
-	cacheMu sync.RWMutex
+	mu       sync.RWMutex
+	services map[string]Service
+}
 
-	cacheDuration = 10 * time.Second
-)
+func NewServiceManager(systemd *Systemd) *ServiceManager {
 
-func GetServices() ([]Service, error) {
+	return &ServiceManager{
+		systemd:  systemd,
+		services: make(map[string]Service),
+	}
+}
 
-	cacheMu.RLock()
+func (m *ServiceManager) loadServices() error {
 
-	if time.Since(cacheTime) < cacheDuration {
-
-		services := make([]Service, len(servicesCache))
-		copy(services, servicesCache)
-
-		cacheMu.RUnlock()
-
-		return services, nil
+	var units []struct {
+		Name        string
+		Description string
+		LoadState   string
+		ActiveState string
+		SubState    string
+		Follow      string
+		Path        dbus.ObjectPath
+		JobID       uint32
+		JobType     string
+		JobPath     dbus.ObjectPath
 	}
 
-	cacheMu.RUnlock()
+	err := m.systemd.obj.Call(
+		systemdIface+".Manager.ListUnits",
+		0,
+	).Store(&units)
 
-	services, err := loadServices()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	cacheMu.Lock()
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
-	servicesCache = services
-	cacheTime = time.Now()
+	for _, unit := range units {
 
-	cacheMu.Unlock()
+		if !strings.HasSuffix(unit.Name, ".service") {
+			continue
+		}
+
+		m.services[unit.Name] = Service{
+			Name:   unit.Name,
+			Status: unit.ActiveState,
+		}
+	}
+
+	return nil
+}
+
+func (m *ServiceManager) GetServices() ([]Service, error) {
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	services := make([]Service, 0, len(m.services))
+
+	for _, service := range m.services {
+		services = append(services, service)
+	}
 
 	return services, nil
 }
 
-func loadServices() ([]Service, error) {
+func (m *ServiceManager) StartService(name string) error {
 
-	cmd := exec.Command(
-		"systemctl",
-		"list-units",
-		"--type=service",
-		"--all",
-		"--no-legend",
-		"--no-pager",
-	)
+	var jobPath dbus.ObjectPath
 
-	output, err := cmd.Output()
+	err := m.systemd.obj.Call(
+		systemdIface+".Manager.StartUnit",
+		0,
+		name,
+		"replace",
+	).Store(&jobPath)
+
+	return err
+}
+
+func (m *ServiceManager) StopService(name string) error {
+
+	var jobPath dbus.ObjectPath
+
+	err := m.systemd.obj.Call(
+		systemdIface+".Manager.StopUnit",
+		0,
+		name,
+		"replace",
+	).Store(&jobPath)
+
+	return err
+}
+
+var (
+	systemd      *Systemd
+	serviceManager *ServiceManager
+)
+
+func InitServices() error {
+
+	var err error
+
+	systemd, err = NewSystemd()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	lines := strings.Split(string(output), "\n")
+	serviceManager = NewServiceManager(systemd)
 
-	var services []Service
+	return serviceManager.loadServices()
+}
 
-	for _, line := range lines {
+func GetServices() ([]Service, error) {
 
-		fields := strings.Fields(line)
-
-		if len(fields) < 4 {
-			continue
-		}
-
-		name := fields[0]
-		status := fields[2]
-
-		if name == "●" {
-
-			if len(fields) < 5 {
-				continue
-			}
-
-			name = fields[1]
-			status = fields[3]
-		}
-
-		services = append(services, Service{
-			Name:   name,
-			Status: status,
-		})
-	}
-
-	return services, nil
+	return serviceManager.GetServices()
 }
 
 func StartService(name string) error {
 
-	cmd := exec.Command(
-		"systemctl",
-		"start",
-		name,
-	)
-
-	err := cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	invalidateCache()
-
-	return nil
+	return serviceManager.StartService(name)
 }
 
 func StopService(name string) error {
 
-	cmd := exec.Command(
-		"systemctl",
-		"stop",
-		name,
-	)
-
-	err := cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	invalidateCache()
-
-	return nil
-}
-
-func invalidateCache() {
-
-	cacheMu.Lock()
-	defer cacheMu.Unlock()
-
-	cacheTime = time.Time{}
-	servicesCache = nil
+	return serviceManager.StopService(name)
 }
