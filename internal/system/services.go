@@ -13,14 +13,12 @@ type Service struct {
 }
 
 type ServiceManager struct {
-	systemd *Systemd
-
+	systemd  *Systemd
 	mu       sync.RWMutex
 	services map[string]Service
 }
 
 func NewServiceManager(systemd *Systemd) *ServiceManager {
-
 	return &ServiceManager{
 		systemd:  systemd,
 		services: make(map[string]Service),
@@ -28,7 +26,6 @@ func NewServiceManager(systemd *Systemd) *ServiceManager {
 }
 
 func (m *ServiceManager) loadServices() error {
-
 	var units []struct {
 		Name        string
 		Description string
@@ -55,7 +52,6 @@ func (m *ServiceManager) loadServices() error {
 	defer m.mu.Unlock()
 
 	for _, unit := range units {
-
 		if !strings.HasSuffix(unit.Name, ".service") {
 			continue
 		}
@@ -70,7 +66,6 @@ func (m *ServiceManager) loadServices() error {
 }
 
 func (m *ServiceManager) GetServices() ([]Service, error) {
-
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -84,7 +79,6 @@ func (m *ServiceManager) GetServices() ([]Service, error) {
 }
 
 func (m *ServiceManager) StartService(name string) error {
-
 	var jobPath dbus.ObjectPath
 
 	err := m.systemd.obj.Call(
@@ -98,7 +92,6 @@ func (m *ServiceManager) StartService(name string) error {
 }
 
 func (m *ServiceManager) StopService(name string) error {
-
 	var jobPath dbus.ObjectPath
 
 	err := m.systemd.obj.Call(
@@ -112,12 +105,11 @@ func (m *ServiceManager) StopService(name string) error {
 }
 
 var (
-	systemd      *Systemd
+	systemd        *Systemd
 	serviceManager *ServiceManager
 )
 
 func InitServices() error {
-
 	var err error
 
 	systemd, err = NewSystemd()
@@ -131,16 +123,13 @@ func InitServices() error {
 }
 
 func GetServices() ([]Service, error) {
-
 	return serviceManager.GetServices()
 }
 
 func StartService(name string) error {
-
 	return serviceManager.StartService(name)
 }
 
 func StopService(name string) error {
-
 	return serviceManager.StopService(name)
 }

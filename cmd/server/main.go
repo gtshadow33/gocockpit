@@ -21,6 +21,11 @@ func main() {
 		log.Fatal("Error cargando configuración: ", err)
 	}
 
+	// Inicializar systemd / servicios
+	if err := system.InitServices(); err != nil {
+		log.Fatal("Error inicializando servicios: ", err)
+	}
+
 	// Buscar templates
 	var files []string
 

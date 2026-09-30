@@ -16,7 +16,6 @@ type Systemd struct {
 }
 
 func NewSystemd() (*Systemd, error) {
-
 	conn, err := dbus.SystemBus()
 	if err != nil {
 		return nil, err
