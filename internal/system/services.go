@@ -66,6 +66,7 @@ func (m *ServiceManager) loadServices() error {
 }
 
 func (m *ServiceManager) GetServices() ([]Service, error) {
+	m.loadServices()
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
