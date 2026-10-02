@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"gocockpit/internal/config"
+	"gocockpit/internal/session"
 	"gocockpit/internal/system"
 	"gocockpit/routes"
 )
@@ -18,6 +19,11 @@ func main() {
 	// Cargar configuración
 	if err := config.Load("gocockpit.toml"); err != nil {
 		log.Fatal("Error cargando configuración: ", err)
+	}
+
+	// Inicializar systemd / servicios
+	if err := system.InitServices(); err != nil {
+		log.Fatal("Error inicializando servicios: ", err)
 	}
 
 	// Buscar templates
@@ -54,6 +60,9 @@ func main() {
 
 	// Monitor del sistema
 	system.Start()
+
+	// Limpieza automática de sesiones
+	session.StartCleanup()
 
 	// Servidor
 	address := config.App.Host + ":" + strconv.Itoa(config.App.Port)

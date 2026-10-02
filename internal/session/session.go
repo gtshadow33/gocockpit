@@ -69,3 +69,32 @@ func Delete(sessionID string) {
 
 	delete(sessions, sessionID)
 }
+
+func CleanupExpired() {
+
+	now := time.Now()
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	for sessionID, session := range sessions {
+
+		if now.After(session.ExpiresAt) {
+			delete(sessions, sessionID)
+		}
+	}
+}
+
+func StartCleanup() {
+
+	ticker := time.NewTicker(20 * time.Minute)
+
+	go func() {
+
+		for range ticker.C {
+			CleanupExpired()
+		}
+
+	}()
+
+}
