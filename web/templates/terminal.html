@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Terminal - GoCockpit</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css">
+
+    <style>
+        html, body {
+            margin: 0;
+            height: 100%;
+            background: #111;
+            overflow: hidden;
+        }
+
+        #terminal {
+            height: 100vh;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="terminal"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js"></script>
+
+    <script>
+        const term = new Terminal({
+            cursorBlink: true,
+            fontFamily: "monospace",
+            fontSize: 14,
+            scrollback: 5000,
+            theme: { background: "#111111", foreground: "#eeeeee" }
+        });
+
+        const fit = new FitAddon.FitAddon();
+        term.loadAddon(fit);
+        term.open(document.getElementById("terminal"));
+        fit.fit();
+        term.focus();
+
+        const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+        const socket = new WebSocket(protocol + "//" + location.host + "/ws/terminal");
+        socket.binaryType = "arraybuffer";
+
+        function sendResize() {
+            if (socket.readyState !== WebSocket.OPEN) return;
+            socket.send(new TextEncoder().encode(
+                JSON.stringify({ cols: term.cols, rows: term.rows })
+            ));
+        }
+
+        socket.onopen = function () {
+            fit.fit();
+            sendResize();
+        };
+
+        socket.onmessage = function (event) {
+            if (typeof event.data === "string") {
+                term.write(event.data);
+            } else {
+                term.write(new Uint8Array(event.data));
+            }
+        };
+
+        socket.onclose = function () {
+            term.write("\r\n\r\n[Terminal cerrada]\r\n");
+        };
+
+        term.onData(function (data) {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(data);
+            }
+        });
+
+        term.onResize(sendResize);
+
+        window.addEventListener("resize", function () {
+            fit.fit();
+        });
+    </script>
+
+</body>
+
+</html>
