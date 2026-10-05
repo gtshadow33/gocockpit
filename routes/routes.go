@@ -30,6 +30,10 @@ func Register(
 		Templates: templates,
 	}
 
+	terminalController := &controllers.TerminalController{
+	Templates: templates,
+}
+
 	// Archivos estáticos
 
 	fs := http.FileServer(http.Dir("./web/static"))
@@ -83,6 +87,13 @@ func Register(
 			),
 		),
 	)
+	//terminal
+	mux.Handle(
+	"/terminal",
+	middleware.Auth(
+		http.HandlerFunc(terminalController.Index),
+	),
+)
 
 	// WebSocket
 
@@ -92,6 +103,12 @@ func Register(
 			http.HandlerFunc(websocket.Stats),
 		),
 	)
+	mux.Handle(
+    "/ws/terminal",
+    middleware.Auth(
+        http.HandlerFunc(websocket.Terminal),
+    ),
+)
 
 	// 404
 
