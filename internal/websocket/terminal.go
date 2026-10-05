@@ -6,13 +6,67 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"sync"
+	"sync/atomic"
+	"time"
 
 	"gocockpit/internal/middleware"
+	"gocockpit/internal/session"
 	"gocockpit/internal/terminal"
 
 	"github.com/creack/pty"
 	"github.com/gorilla/websocket"
 )
+
+const (
+	// Máximo de terminales abiertas a la vez por usuario.
+	maxTerminalsPerUser = 5
+
+	// Cada pingPeriod se envía un ping y se revisa sesión e inactividad.
+	pingPeriod = 30 * time.Second
+
+	// Si no llega ningún pong/mensaje en pongWait, la conexión se da por muerta.
+	pongWait = 70 * time.Second
+
+	// Sin teclas del usuario durante este tiempo, se cierra la terminal.
+	idleTimeout = 30 * time.Minute
+
+	// Tamaño máximo de un mensaje del navegador.
+	maxMessageSize = 64 * 1024
+)
+
+var (
+	activeMu sync.Mutex
+	active   = make(map[string]int)
+)
+
+// acquire reserva un hueco de terminal para el usuario.
+func acquire(username string) bool {
+
+	activeMu.Lock()
+	defer activeMu.Unlock()
+
+	if active[username] >= maxTerminalsPerUser {
+		return false
+	}
+
+	active[username]++
+
+	return true
+}
+
+// release libera el hueco reservado con acquire.
+func release(username string) {
+
+	activeMu.Lock()
+	defer activeMu.Unlock()
+
+	active[username]--
+
+	if active[username] <= 0 {
+		delete(active, username)
+	}
+}
 
 // Upgrader convierte la petición HTTP en una conexión WebSocket.
 // CheckOrigin decide si se acepta el origen de la petición.
@@ -33,8 +87,7 @@ var terminalUpgrader = websocket.Upgrader{
 		}
 
 		// Solo se acepta si la página que abre el socket es de este mismo
-		// host. Evita que otra web use la cookie del usuario para abrir
-		// una shell (Cross-Site WebSocket Hijacking).
+		// host. Evita Cross-Site WebSocket Hijacking.
 		return u.Host == r.Host
 	},
 }
@@ -50,7 +103,6 @@ type resizeMessage struct {
 func Terminal(w http.ResponseWriter, r *http.Request) {
 
 	// El middleware Auth guarda el usuario como string en el contexto.
-	// Si no está, la ruta no pasó por Auth y se rechaza antes del upgrade.
 	username, ok := r.Context().Value(
 		middleware.UsernameKey,
 	).(string)
@@ -60,29 +112,44 @@ func Terminal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// ID de sesión: se revisa periódicamente para cortar la terminal
+	// si el usuario hace logout o la sesión caduca.
+	cookie, err := r.Cookie("session_id")
+	if err != nil {
+		http.Error(w, "No autenticado", http.StatusUnauthorized)
+		return
+	}
+
+	sessionID := cookie.Value
+
+	// Límite de terminales simultáneas por usuario.
+	if !acquire(username) {
+		http.Error(
+			w,
+			"Demasiadas terminales abiertas",
+			http.StatusTooManyRequests,
+		)
+		return
+	}
+	defer release(username)
+
 	log.Println("Terminal: usuario:", username)
 
-	// Upgrade HTTP -> WebSocket. Si falla, el Upgrader ya respondió
-	// al cliente con el error HTTP correspondiente.
 	conn, err := terminalUpgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("Terminal: error WebSocket:", err)
 		return
 	}
 
-	// Se cierra la conexión al salir del handler, pase lo que pase.
 	defer conn.Close()
 
 	log.Println("Terminal: WebSocket conectado")
 
-	// Lanza /bin/bash con los permisos del usuario autenticado dentro de
-	// una PTY. Requiere que GoCockpit corra como root (o con CAP_SETUID
-	// y CAP_SETGID) para cambiar de uid/gid.
+	// Lanza bash con uid, gid y grupos del usuario autenticado.
 	term, err := terminal.Start(username)
 	if err != nil {
 		log.Println("Terminal: error iniciando PTY:", err)
 
-		// Avisa al usuario en pantalla antes de cerrar.
 		conn.WriteMessage(
 			websocket.TextMessage,
 			[]byte("Error iniciando terminal: "+err.Error()+"\r\n"),
@@ -91,18 +158,75 @@ func Terminal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Al terminar la sesión se cierra la PTY y se mata la shell.
 	defer term.Close()
 
 	log.Println("Terminal: PTY iniciada")
 
-	// --- PTY -> WebSocket ---------------------------------------------
-	// Goroutine que lee la salida de la shell y la envía al navegador.
+	// --- Keepalive ----------------------------------------------------
+	conn.SetReadLimit(maxMessageSize)
+	conn.SetReadDeadline(time.Now().Add(pongWait))
+
+	// El navegador responde a los ping con pong automáticamente.
+	conn.SetPongHandler(func(string) error {
+		conn.SetReadDeadline(time.Now().Add(pongWait))
+		return nil
+	})
+
+	// Última vez que el usuario escribió algo (nanosegundos Unix).
+	var lastActivity atomic.Int64
+	lastActivity.Store(time.Now().UnixNano())
+
+	// done se cierra al salir del handler y para el supervisor.
+	done := make(chan struct{})
+	defer close(done)
+
+	// --- Supervisor ---------------------------------------------------
+	// Cada pingPeriod: comprueba sesión, inactividad y envía ping.
+	// WriteControl es seguro de llamar a la vez que WriteMessage.
 	go func() {
 
-		// Si la shell termina (por ejemplo con "exit"), la lectura falla
-		// y se cierra el WebSocket. Eso desbloquea el ReadMessage del
-		// bucle principal y termina el handler.
+		ticker := time.NewTicker(pingPeriod)
+		defer ticker.Stop()
+
+		for {
+			select {
+
+			case <-done:
+				return
+
+			case <-ticker.C:
+
+				if _, valid := session.Get(sessionID); !valid {
+					log.Println("Terminal: sesión caducada o cerrada:", username)
+					closeWithReason(conn, "sesión caducada")
+					return
+				}
+
+				idle := time.Since(time.Unix(0, lastActivity.Load()))
+
+				if idle > idleTimeout {
+					log.Println("Terminal: cerrada por inactividad:", username)
+					closeWithReason(conn, "inactividad")
+					return
+				}
+
+				if err := conn.WriteControl(
+					websocket.PingMessage,
+					nil,
+					time.Now().Add(10*time.Second),
+				); err != nil {
+					conn.Close()
+					return
+				}
+			}
+		}
+	}()
+
+	// --- PTY -> WebSocket ---------------------------------------------
+	go func() {
+
+		// Si la shell termina, se cierra el WebSocket y eso desbloquea
+		// el ReadMessage del bucle principal.
 		defer conn.Close()
 
 		buffer := make([]byte, 4096)
@@ -111,13 +235,9 @@ func Terminal(w http.ResponseWriter, r *http.Request) {
 
 			n, err := term.PTY.Read(buffer)
 
-			// Se procesan primero los bytes leídos: Read puede devolver
-			// datos y un error en la misma llamada.
 			if n > 0 {
 
-				// Se envía como binario porque un chunk puede cortar un
-				// carácter UTF-8 a la mitad, y el navegador cerraría el
-				// socket si lo recibiera como texto inválido.
+				// Binario: un chunk puede cortar un carácter UTF-8.
 				if werr := conn.WriteMessage(
 					websocket.BinaryMessage,
 					buffer[:n],
@@ -129,7 +249,6 @@ func Terminal(w http.ResponseWriter, r *http.Request) {
 
 			if err != nil {
 
-				// io.EOF es el cierre normal; cualquier otro error se registra.
 				if err != io.EOF {
 					log.Println("Terminal: error leyendo PTY:", err)
 				}
@@ -140,29 +259,27 @@ func Terminal(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	// --- WebSocket -> PTY ---------------------------------------------
-	// Bucle principal: lee lo que envía el navegador.
 	// Protocolo:
-	//   - Mensaje de texto:   teclas pulsadas, se escriben tal cual en la PTY.
+	//   - Mensaje de texto:   teclas pulsadas, se escriben en la PTY.
 	//   - Mensaje binario:    JSON {"cols":N,"rows":M} para redimensionar.
 	for {
 
 		msgType, data, err := conn.ReadMessage()
 		if err != nil {
-			// El cliente cerró la pestaña, o la goroutine cerró la conexión.
 			log.Println("Terminal: WebSocket cerrado:", err)
 			return
 		}
+
+		// Cualquier mensaje prueba que el cliente está vivo.
+		conn.SetReadDeadline(time.Now().Add(pongWait))
 
 		if msgType == websocket.BinaryMessage {
 
 			var size resizeMessage
 
-			// Se ignoran mensajes mal formados o con tamaño 0.
 			if json.Unmarshal(data, &size) == nil &&
 				size.Cols > 0 && size.Rows > 0 {
 
-				// Informa a la PTY del nuevo tamaño. Así vim, htop o bash
-				// ajustan su salida al tamaño real de la ventana.
 				pty.Setsize(term.PTY, &pty.Winsize{
 					Cols: size.Cols,
 					Rows: size.Rows,
@@ -172,10 +289,24 @@ func Terminal(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		// Teclas del usuario -> entrada estándar de la shell.
+		// Solo las teclas cuentan como actividad (no los resize).
+		lastActivity.Store(time.Now().UnixNano())
+
 		if _, err := term.PTY.Write(data); err != nil {
 			log.Println("Terminal: error escribiendo PTY:", err)
 			return
 		}
 	}
+}
+
+// closeWithReason envía un frame de cierre con motivo y cierra la conexión.
+func closeWithReason(conn *websocket.Conn, reason string) {
+
+	conn.WriteControl(
+		websocket.CloseMessage,
+		websocket.FormatCloseMessage(websocket.CloseNormalClosure, reason),
+		time.Now().Add(5*time.Second),
+	)
+
+	conn.Close()
 }
