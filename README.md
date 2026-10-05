@@ -7,7 +7,7 @@ Web-based Linux server monitoring and administration dashboard built with Go.
 GoCockpit es una aplicación web para monitorizar y administrar
 un servidor Linux desde una interfaz centralizada.
 
-## Características
+## Objetivo
 
 - Monitorización del sistema
 - Monitorización de CPU y memoria
