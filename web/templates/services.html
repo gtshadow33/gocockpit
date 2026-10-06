@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 
@@ -76,10 +75,11 @@
                             name="service"
                             value="{{ .Name }}"
                         >
-                        <input 
+
+                        <input
                             type="hidden"
                             name="CSRF"
-                            Value="{{.Csrf}}"
+                            value="{{ $.Csrf }}"
                         >
 
                         <label class="toggle">
@@ -109,10 +109,11 @@
                             name="service"
                             value="{{ .Name }}"
                         >
-                        <input 
+
+                        <input
                             type="hidden"
                             name="CSRF"
-                            Value="{{.Csrf}}"
+                            value="{{ $.Csrf }}"
                         >
 
                         <label class="toggle">
@@ -153,4 +154,3 @@
 </body>
 
 </html>
-
