@@ -70,23 +70,27 @@ func Register(
 
 	mux.Handle(
 		"/services/start",
+		middleware.CSRF(
 		middleware.Auth(
 			middleware.Admin(
 				http.HandlerFunc(servicesController.Start),
 			),
 		),
-	)
+	),
+)
 
 	// Detener servicio -> requiere sudo
 
 	mux.Handle(
 		"/services/stop",
+		middleware.CSRF(
 		middleware.Auth(
 			middleware.Admin(
 				http.HandlerFunc(servicesController.Stop),
 			),
 		),
-	)
+	),
+)
 	//terminal
 	mux.Handle(
 	"/terminal",

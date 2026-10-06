@@ -15,6 +15,9 @@ type ServicesController struct {
 func (c *ServicesController) Index(w http.ResponseWriter, r *http.Request) {
 
 	username := r.Context().Value(middleware.UsernameKey).(string)
+	csrf := r.Context().Value(middleware.CsrfKey).(string)
+
+
 
 	services, err := system.GetServices()
 
@@ -29,9 +32,11 @@ func (c *ServicesController) Index(w http.ResponseWriter, r *http.Request) {
 
 	data := struct {
 		Username string
+		Csrf string
 		Services []system.Service
 	}{
 		Username: username,
+		Csrf: csrf,
 		Services: services,
 	}
 

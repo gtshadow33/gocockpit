@@ -76,6 +76,11 @@
                             name="service"
                             value="{{ .Name }}"
                         >
+                        <input 
+                            type="hidden"
+                            name="CSRF"
+                            Value="{{.Csrf}}"
+                        >
 
                         <label class="toggle">
 
@@ -103,6 +108,11 @@
                             type="hidden"
                             name="service"
                             value="{{ .Name }}"
+                        >
+                        <input 
+                            type="hidden"
+                            name="CSRF"
+                            Value="{{.Csrf}}"
                         >
 
                         <label class="toggle">
