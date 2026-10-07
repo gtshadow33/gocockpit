@@ -17,7 +17,6 @@ import (
 
 func main() {
 
-
 	// Cargar configuración
 	if err := config.Load(config.ConfigFile); err != nil {
 		log.Fatal("Error cargando configuración: ", err)
@@ -31,11 +30,9 @@ func main() {
 	// Buscar templates
 	var files []string
 
-
-	err := filepath.Walk(filepath.Join(config.WebDir, "templates"), func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
+	err := filepath.Walk(
+		filepath.Join(config.WebDir, "templates"),
+		func(path string, info os.FileInfo, err error) error {
 
 			if err != nil {
 				return err
@@ -74,8 +71,8 @@ func main() {
 
 	// Generar certificado TLS si no existe
 	if err := tls.GenerateCertificate(
-		"cert/server.crt",
-		"cert/server.key",
+		filepath.Join(config.CertDir, "server.crt"),
+		filepath.Join(config.CertDir, "server.key"),
 	); err != nil {
 		log.Fatal("Error generando certificado TLS: ", err)
 	}
@@ -91,10 +88,9 @@ func main() {
 	log.Fatal(
 		http.ListenAndServeTLS(
 			address,
-			"cert/server.crt",
-			"cert/server.key",
+			filepath.Join(config.CertDir, "server.crt"),
+			filepath.Join(config.CertDir, "server.key"),
 			mux,
 		),
 	)
 }
-
