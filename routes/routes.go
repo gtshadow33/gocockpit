@@ -44,8 +44,12 @@ func Register(
 	)
 
 	// Autenticación
-
-	mux.HandleFunc("/login", authController.Login)
+	mux.Handle(
+		"/login",
+		middleware.RateLimit(
+			http.HandlerFunc(authController.Login),
+		),
+	)
 
 	mux.HandleFunc("/logout", authController.Logout)
 
