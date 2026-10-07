@@ -73,21 +73,26 @@ func Register(
 
 	mux.Handle(
 		"/services/start",
+		
 		middleware.Auth(
+			middleware.Admin(
 			middleware.CSRF(
 				http.HandlerFunc(servicesController.Start),
 			),
 		),
-	)
+	),
+)
 
 	mux.Handle(
 		"/services/stop",
 		middleware.Auth(
+			middleware.Admin(
 			middleware.CSRF(
 				http.HandlerFunc(servicesController.Stop),
 			),
 		),
-	)
+	),
+)
 
 	// Terminal
 
