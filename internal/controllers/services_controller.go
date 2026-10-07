@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"gocockpit/internal/middleware"
+	"gocockpit/internal/session"
 	"gocockpit/internal/system"
 )
 
@@ -15,6 +16,27 @@ type ServicesController struct {
 func (c *ServicesController) Index(w http.ResponseWriter, r *http.Request) {
 
 	username := r.Context().Value(middleware.UsernameKey).(string)
+
+	cookie, err := r.Cookie("session_id")
+	if err != nil {
+		http.Error(
+			w,
+			"Sesión no encontrada",
+			http.StatusUnauthorized,
+		)
+		return
+	}
+
+	csrf, ok := session.GetCSRFToken(cookie.Value)
+
+	if !ok {
+		http.Error(
+			w,
+			"Sesión inválida",
+			http.StatusUnauthorized,
+		)
+		return
+	}
 
 	services, err := system.GetServices()
 
@@ -29,9 +51,11 @@ func (c *ServicesController) Index(w http.ResponseWriter, r *http.Request) {
 
 	data := struct {
 		Username string
+		Csrf     string
 		Services []system.Service
 	}{
 		Username: username,
+		Csrf:     csrf,
 		Services: services,
 	}
 
