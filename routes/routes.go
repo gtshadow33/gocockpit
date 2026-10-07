@@ -67,9 +67,11 @@ func Register(
 	mux.Handle(
 		"/services",
 		middleware.Auth(
+			middleware.Admin(
 			http.HandlerFunc(servicesController.Index),
 		),
-	)
+	),
+)
 
 	mux.Handle(
 		"/services/start",
