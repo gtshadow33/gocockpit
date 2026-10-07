@@ -3,7 +3,9 @@ package routes
 import (
 	"html/template"
 	"net/http"
+	"path/filepath"
 
+	"gocockpit/internal/config"
 	"gocockpit/internal/controllers"
 	"gocockpit/internal/middleware"
 	"gocockpit/internal/websocket"
@@ -31,12 +33,14 @@ func Register(
 	}
 
 	terminalController := &controllers.TerminalController{
-	Templates: templates,
-}
+		Templates: templates,
+	}
 
 	// Archivos estáticos
 
-	fs := http.FileServer(http.Dir("./web/static"))
+	fs := http.FileServer(
+		http.Dir(filepath.Join(config.WebDir, "static")),
+	)
 
 	mux.Handle(
 		"/static/",
@@ -45,7 +49,13 @@ func Register(
 
 	// Autenticación
 
-	mux.HandleFunc("/login", authController.Login)
+	mux.Handle(
+		"/login",
+		middleware.RateLimit(
+			http.HandlerFunc(authController.Login),
+		),
+	)
+
 	mux.HandleFunc("/logout", authController.Logout)
 
 	// Dashboard
@@ -57,43 +67,47 @@ func Register(
 		),
 	)
 
-	// Servicios
+	// Servicios (solo admin)
 
 	mux.Handle(
 		"/services",
 		middleware.Auth(
-			http.HandlerFunc(servicesController.Index),
+			middleware.Admin(
+				http.HandlerFunc(servicesController.Index),
+			),
 		),
 	)
-
-	// Iniciar servicio -> requiere sudo
 
 	mux.Handle(
 		"/services/start",
 		middleware.Auth(
 			middleware.Admin(
-				http.HandlerFunc(servicesController.Start),
+				middleware.CSRF(
+					http.HandlerFunc(servicesController.Start),
+				),
 			),
 		),
 	)
-
-	// Detener servicio -> requiere sudo
 
 	mux.Handle(
 		"/services/stop",
 		middleware.Auth(
 			middleware.Admin(
-				http.HandlerFunc(servicesController.Stop),
+				middleware.CSRF(
+					http.HandlerFunc(servicesController.Stop),
+				),
 			),
 		),
 	)
-	//terminal
+
+	// Terminal
+
 	mux.Handle(
-	"/terminal",
-	middleware.Auth(
-		http.HandlerFunc(terminalController.Index),
-	),
-)
+		"/terminal",
+		middleware.Auth(
+			http.HandlerFunc(terminalController.Index),
+		),
+	)
 
 	// WebSocket
 
@@ -103,12 +117,13 @@ func Register(
 			http.HandlerFunc(websocket.Stats),
 		),
 	)
+
 	mux.Handle(
-    "/ws/terminal",
-    middleware.Auth(
-        http.HandlerFunc(websocket.Terminal),
-    ),
-)
+		"/ws/terminal",
+		middleware.Auth(
+			http.HandlerFunc(websocket.Terminal),
+		),
+	)
 
 	// 404
 

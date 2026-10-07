@@ -16,8 +16,9 @@ import (
 
 func main() {
 
+
 	// Cargar configuración
-	if err := config.Load("gocockpit.toml"); err != nil {
+	if err := config.Load(config.ConfigFile); err != nil {
 		log.Fatal("Error cargando configuración: ", err)
 	}
 
@@ -29,7 +30,7 @@ func main() {
 	// Buscar templates
 	var files []string
 
-	err := filepath.Walk("web/templates", func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(filepath.Join(config.WebDir, "templates"), func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
