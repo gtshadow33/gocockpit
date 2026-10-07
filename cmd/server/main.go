@@ -11,6 +11,7 @@ import (
 	"gocockpit/internal/config"
 	"gocockpit/internal/session"
 	"gocockpit/internal/system"
+	"gocockpit/internal/tls"
 	"gocockpit/routes"
 )
 
@@ -29,17 +30,21 @@ func main() {
 	// Buscar templates
 	var files []string
 
-	err := filepath.Walk("web/templates", func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
+	err := filepath.Walk(
+		"web/templates",
+		func(path string, info os.FileInfo, err error) error {
 
-		if !info.IsDir() && filepath.Ext(path) == ".html" {
-			files = append(files, path)
-		}
+			if err != nil {
+				return err
+			}
 
-		return nil
-	})
+			if !info.IsDir() && filepath.Ext(path) == ".html" {
+				files = append(files, path)
+			}
+
+			return nil
+		},
+	)
 
 	if err != nil {
 		log.Fatal("Error buscando templates: ", err)
@@ -64,14 +69,29 @@ func main() {
 	// Limpieza automática de sesiones
 	session.StartCleanup()
 
-	// Servidor
+	// Generar certificado TLS si no existe
+	if err := tls.GenerateCertificate(
+		"cert/server.crt",
+		"cert/server.key",
+	); err != nil {
+		log.Fatal("Error generando certificado TLS: ", err)
+	}
+
+	// Dirección del servidor
 	address := config.App.Host + ":" + strconv.Itoa(config.App.Port)
 
 	log.Println(
-		"GoCockpit escuchando en http://" + address,
+		"GoCockpit escuchando en https://" + address,
 	)
 
+	// Servidor HTTPS
 	log.Fatal(
-		http.ListenAndServe(address, mux),
+		http.ListenAndServeTLS(
+			address,
+			"cert/server.crt",
+			"cert/server.key",
+			mux,
+		),
 	)
 }
+

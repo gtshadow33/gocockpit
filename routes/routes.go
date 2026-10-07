@@ -31,8 +31,8 @@ func Register(
 	}
 
 	terminalController := &controllers.TerminalController{
-	Templates: templates,
-}
+		Templates: templates,
+	}
 
 	// Archivos estáticos
 
@@ -44,8 +44,13 @@ func Register(
 	)
 
 	// Autenticación
+	mux.Handle(
+		"/login",
+		middleware.RateLimit(
+			http.HandlerFunc(authController.Login),
+		),
+	)
 
-	mux.HandleFunc("/login", authController.Login)
 	mux.HandleFunc("/logout", authController.Logout)
 
 	// Dashboard
@@ -62,38 +67,43 @@ func Register(
 	mux.Handle(
 		"/services",
 		middleware.Auth(
+			middleware.Admin(
 			http.HandlerFunc(servicesController.Index),
 		),
-	)
-
-	// Iniciar servicio -> requiere sudo
+	),
+)
 
 	mux.Handle(
 		"/services/start",
+		
 		middleware.Auth(
 			middleware.Admin(
+			middleware.CSRF(
 				http.HandlerFunc(servicesController.Start),
 			),
 		),
-	)
-
-	// Detener servicio -> requiere sudo
+	),
+)
 
 	mux.Handle(
 		"/services/stop",
 		middleware.Auth(
 			middleware.Admin(
+			middleware.CSRF(
 				http.HandlerFunc(servicesController.Stop),
 			),
 		),
-	)
-	//terminal
-	mux.Handle(
-	"/terminal",
-	middleware.Auth(
-		http.HandlerFunc(terminalController.Index),
 	),
 )
+
+	// Terminal
+
+	mux.Handle(
+		"/terminal",
+		middleware.Auth(
+			http.HandlerFunc(terminalController.Index),
+		),
+	)
 
 	// WebSocket
 
@@ -103,12 +113,13 @@ func Register(
 			http.HandlerFunc(websocket.Stats),
 		),
 	)
+
 	mux.Handle(
-    "/ws/terminal",
-    middleware.Auth(
-        http.HandlerFunc(websocket.Terminal),
-    ),
-)
+		"/ws/terminal",
+		middleware.Auth(
+			http.HandlerFunc(websocket.Terminal),
+		),
+	)
 
 	// 404
 
