@@ -16,6 +16,18 @@ var (
 
 func RateLimit(next http.Handler) http.Handler {
 
+	// Limpia todos los limitadores cada 20 minutos.
+	go func() {
+		ticker := time.NewTicker(20 * time.Minute)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			mu.Lock()
+			limiters = make(map[string]*rate.Limiter)
+			mu.Unlock()
+		}
+	}()
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		ip, _, err := net.SplitHostPort(r.RemoteAddr)
