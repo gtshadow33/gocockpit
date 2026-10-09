@@ -63,9 +63,7 @@ func GenerateCertificate(certFile, keyFile string) error {
 
 		NotBefore: time.Now(),
 
-		NotAfter: time.Now().Add(
-			365 * 24 * time.Hour,
-		),
+		NotAfter: time.Now().AddDate(10, 0, 0),
 
 		KeyUsage: x509.KeyUsageDigitalSignature |
 			x509.KeyUsageKeyEncipherment,
